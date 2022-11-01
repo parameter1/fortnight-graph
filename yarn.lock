@@ -40,9 +40,10 @@
     es6-promisify "^6.0.0"
     stoppable "^1.0.5"
 
-"@limit0/graphql-custom-types@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@limit0/graphql-custom-types/-/graphql-custom-types-1.0.1.tgz#6ec74695eb1de6bf3b2824233f391bd256c7de9c"
+"@limit0/graphql-custom-types@^1.0.1", "@limit0/graphql-custom-types@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@limit0/graphql-custom-types/-/graphql-custom-types-1.0.2.tgz#3a24273bcf23390c10ddee9bde8c06b8f04705f4"
+  integrity sha512-vVn4/no1EEUji4woilrJkV5wW4AMLY3rX1vfClLyRhQ+c3XpBZz2cvtE4fBEeVmnqDcAznWsNuBUg6eZ1Qxo7A==
   dependencies:
     base64-url "^2.2.0"
 
