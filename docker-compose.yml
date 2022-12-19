@@ -26,6 +26,8 @@ services:
       ELASTIC_INDEX_RECREATE: ${ELASTIC_INDEX_RECREATE-false}
       MONGOOSE_DEBUG: ${MONGOOSE_DEBUG-false}
       MONGO_DSN: ${MONGO_DSN-mongodb://mongo:27017/fortnight}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED-false}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY-}
       NODE_ENV: development
       PORT: 8100
       REDIS_DSN: redis://redis:6379/0
