@@ -68,7 +68,7 @@ jobs:
           npx @parameter1/rancher2cli dl \
             --wait --namespace native-x \
             basecms-service native-x-graphql \
-            ${{ needs.version.outputs.version }}
+            ${{ needs.version.outputs.image }}
         env:
           RANCHER_CLUSTERID: ${{ secrets.RANCHER_CLUSTERID_ADX }}
           RANCHER_TOKEN: ${{ secrets.RANCHER_TOKEN }}
