@@ -18,12 +18,14 @@ const mongodb = () => {
   ]);
 };
 
-module.exports = () => () => {
+module.exports = ({ withElastic = false }) => () => {
   const errors = [];
   return Promise.all([
     ping(mongodb(), 'MongoDB'),
     ping(redis.pingAsync(), 'Redis'),
-    ping(elastic.client.cluster.health({}), 'ElasticSearch'),
+    ...(withElastic ? [
+      ping(elastic.client.cluster.health({}), 'ElasticSearch'),
+    ] : []),
   ].map(p => p.catch((err) => {
     errors.push(err);
   }))).then((res) => {

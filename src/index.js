@@ -21,7 +21,10 @@ const boot = async () => {
   createTerminus(server, {
     timout: 1000,
     signals: ['SIGTERM', 'SIGINT', 'SIGHUP', 'SIGQUIT'],
-    healthChecks: { '/_health': health() },
+    healthChecks: {
+      '/_health': health({ withElastic: false }),
+      '/_health-elastic': health({ withElastic: true }),
+    },
     onSignal: () => {
       write('> Cleaning up...');
       return stop().catch(e => write('> CLEANUP ERRORS:', e));
