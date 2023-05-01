@@ -23,6 +23,7 @@ router.get('/:pid([a-f0-9]{24}).json', asyncRoute(async (req, res) => {
     date,
     imageOptions: parseOptions(query.imageOptions),
     advertiserLogoOptions: parseOptions(query.advertiserLogoOptions),
+    opts: parseOptions(query.opts),
   });
   res.json({ data });
 }), (err, req, res, next) => { // eslint-disable-line no-unused-vars
