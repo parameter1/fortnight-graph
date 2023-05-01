@@ -46,7 +46,7 @@ module.exports = {
     if (!lineItems || !lineItems.length) return null;
     const lineItemsToReturn = lineItems.slice(0, limit);
 
-    // find the campaigns and for the line items and the deployment for the placements
+    // find the campaigns for the line items and the deployment for the placements
     const campaigns = await Promise.all(
       lineItemsToReturn.map(lineItem => Campaign.findActiveById(lineItem.campaignId, {
         name: 1,
