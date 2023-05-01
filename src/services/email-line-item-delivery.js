@@ -67,15 +67,15 @@ module.exports = {
     if (!creatives || !creatives.length) return null;
 
     await Promise.all(creatives.map(async (creative) => {
-      if (creative.image && creative.image.src) {
+      if (creative.image) {
         // eslint-disable-next-line no-param-reassign
-        creative.image.src = await creative.image.src.getSrc(true, imageOptions);
+        creative.image.src = await creative.image.getSrc(true, imageOptions);
       }
     }));
     await Promise.all(advertisers.map(async (advertiser) => {
-      if (advertiser.image && advertiser.image.src) {
+      if (advertiser.image) {
         // eslint-disable-next-line no-param-reassign
-        advertiser.image.src = await advertiser.image.src.getSrc(true, imageOptions);
+        advertiser.image.src = await advertiser.image.getSrc(true, imageOptions);
       }
     }));
 
