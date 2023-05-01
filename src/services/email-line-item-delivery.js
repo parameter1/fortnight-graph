@@ -1,4 +1,5 @@
 const createError = require('http-errors');
+const { parseLimit } = require('../services/campaign-delivery');
 const {
   Advertiser,
   Campaign,
@@ -28,22 +29,26 @@ module.exports = {
    * @param {Date} params.date
    * @param {object} [params.imageOptions] Imgix options to use in the creative image url.
    * @param {object} [params.advertiserLogoOptions] Imgix options to use in the creative image url.
+   * @param {object} [params.opts] Generic options see campaign-delivery.js for potential examples
    */
   async findFor({
     placementId,
     date,
     imageOptions,
     advertiserLogoOptions,
+    opts,
   } = {}) {
-    const [placement, lineItem] = await Promise.all([
+    const limit = opts.n ? parseLimit(opts.n) : 1;
+    const [placement, lineItems] = await Promise.all([
       this.getPlacement({ placementId }),
-      this.getLineItemFor({ placementId, date }),
+      this.getLineItemsFor({ placementId, date }),
     ]);
-    if (!lineItem) return null;
+    if (!lineItems || !lineItems.length) return null;
+    const lineItemsToReturn = lineItems.slice(0, limit);
 
-    // find the campaign and for the line item and the deployment for the placement
-    const [campaign, deployment] = await Promise.all([
-      Campaign.findActiveById(lineItem.campaignId, {
+    // find the campaigns and for the line items and the deployment for the placements
+    const campaigns = await Promise.all(
+      lineItemsToReturn.map(lineItem => Campaign.findActiveById(lineItem.campaignId, {
         name: 1,
         advertiserId: 1,
         storyId: 1,
@@ -51,70 +56,78 @@ module.exports = {
         creatives: 1,
         createdAt: 1,
         updatedAt: 1,
-      }),
-      EmailDeployment.findById(placement.deploymentId, { publisherId: 1 }),
-    ]);
-    if (!campaign) return null;
-    const [advertiser, creative] = await Promise.all([
-      this.getAdvertiserFor(campaign, advertiserLogoOptions),
-      this.getCreativeFor(campaign),
-    ]);
-    if (!creative) return null;
+      })),
+    );
+    const deployment = await EmailDeployment.findById(placement.deploymentId, { publisherId: 1 });
+    if (!campaigns || !campaigns.length) return null;
+    const advertisers = await Promise.all(
+      campaigns.map(campaign => this.getAdvertiserFor(campaign, advertiserLogoOptions)),
+    );
+    const creatives = await Promise.all(campaigns.map(campaign => this.getCreativeFor(campaign)));
+    if (!creatives || !creatives.length) return null;
 
-    await Promise.all([
-      (async () => {
-        if (creative.image) creative.image.src = await creative.image.getSrc(true, imageOptions);
-      })(),
-      (async () => {
-        if (advertiser.image) {
-          advertiser.image.src = await advertiser.image.getSrc(false, advertiserLogoOptions);
-        }
-      })(),
-    ]);
+    await Promise.all(creatives.map(async (creative) => {
+      if (creative.image && creative.image.src) {
+        // eslint-disable-next-line no-param-reassign
+        creative.image.src = await creative.image.src.getSrc(true, imageOptions);
+      }
+    }));
+    await Promise.all(advertisers.map(async (advertiser) => {
+      if (advertiser.image && advertiser.image.src) {
+        // eslint-disable-next-line no-param-reassign
+        advertiser.image.src = await advertiser.image.src.getSrc(true, imageOptions);
+      }
+    }));
 
-    return {
-      placement: {
-        id: placement.id,
-        name: placement.name,
-        fullName: placement.fullName,
-        publisherName: placement.publisherName,
-        deploymentName: placement.deploymentName,
-      },
-      advertiser: {
-        id: advertiser.id,
-        name: advertiser.name,
-        pushId: advertiser.pushId,
-        website: advertiser.website,
-        externalId: advertiser.externalId,
-        image: advertiser.image ? {
-          id: advertiser.image.id,
-          src: advertiser.image.src,
-          alt: advertiser.image.alt,
-        } : {},
-      },
-      campaign: {
-        id: campaign.id,
-        name: campaign.name,
-        lineItem: {
-          id: lineItem.id,
-          name: lineItem.name,
-          createdAt: lineItem.createdAt ? lineItem.createdAt.getTime() : null,
-          updatedAt: lineItem.updatedAt ? lineItem.updatedAt.getTime() : null,
+    const itemsToReturn = await Promise.all(lineItemsToReturn.map(async (lineItem, index) => {
+      const campaign = campaigns[index];
+      const advertiser = advertisers[index];
+      const creative = creatives[index];
+      return {
+        placement: {
+          id: placement.id,
+          name: placement.name,
+          fullName: placement.fullName,
+          publisherName: placement.publisherName,
+          deploymentName: placement.deploymentName,
         },
-      },
-      creative: {
-        id: creative.id,
-        title: creative.title,
-        teaser: creative.teaser,
-        linkText: creative.linkText || null,
-        href: await this.getClickUrl(campaign, deployment, creative),
-        image: creative.image ? {
-          id: creative.image.id,
-          src: creative.image.src,
-          alt: creative.image.alt,
-        } : {},
-      },
-    };
+        advertiser: {
+          id: advertiser.id,
+          name: advertiser.name,
+          pushId: advertiser.pushId,
+          website: advertiser.website,
+          externalId: advertiser.externalId,
+          image: advertiser.image ? {
+            id: advertiser.image.id,
+            src: advertiser.image.src,
+            alt: advertiser.image.alt,
+          } : {},
+        },
+        campaign: {
+          id: campaign.id,
+          name: campaign.name,
+          lineItem: {
+            id: lineItem.id,
+            name: lineItem.name,
+            createdAt: lineItem.createdAt ? lineItem.createdAt.getTime() : null,
+            updatedAt: lineItem.updatedAt ? lineItem.updatedAt.getTime() : null,
+          },
+        },
+        creative: {
+          id: creative.id,
+          title: creative.title,
+          teaser: creative.teaser,
+          linkText: creative.linkText || null,
+          href: await this.getClickUrl(campaign, deployment, creative),
+          image: creative.image ? {
+            id: creative.image.id,
+            src: creative.image.src,
+            alt: creative.image.alt,
+          } : {},
+        },
+      };
+    }));
+    return limit === 1 ? itemsToReturn[0] : itemsToReturn;
   },
 
   /**
@@ -143,13 +156,13 @@ module.exports = {
    * @param {string} params.placementId
    * @param {Date} params.date
    */
-  async getLineItemFor({ placementId, date: d } = {}) {
+  async getLineItemsFor({ placementId, date: d } = {}) {
     if (!placementId) throw createError(400, 'No placement ID was provided.');
     if (!d) throw createError(400, 'No date was provided.');
     const { $d: date } = dayjs(d).tz('UTC');
 
     // find the _first_ matching line item. if more than one, pick the oldest (i.e. sort by _id).
-    return EmailLineItem.findOne({
+    return EmailLineItem.find({
       $or: [
         { 'dates.start': { $lte: date }, 'dates.end': { $gte: date } },
         { 'dates.days': getStartOfDay(date) },
