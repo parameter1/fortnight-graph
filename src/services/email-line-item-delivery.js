@@ -36,19 +36,18 @@ module.exports = {
     date,
     imageOptions,
     advertiserLogoOptions,
-    opts,
+    opts = {},
   } = {}) {
     const limit = opts.n ? parseLimit(opts.n) : 1;
     const [placement, lineItems] = await Promise.all([
       this.getPlacement({ placementId }),
-      this.getLineItemsFor({ placementId, date }),
+      this.getLineItemsFor({ placementId, date, limit }),
     ]);
     if (!lineItems || !lineItems.length) return null;
-    const lineItemsToReturn = lineItems.slice(0, limit);
 
     // find the campaigns for the line items and the deployment for the placements
     const campaigns = await Promise.all(
-      lineItemsToReturn.map(lineItem => Campaign.findActiveById(lineItem.campaignId, {
+      lineItems.map(lineItem => Campaign.findActiveById(lineItem.campaignId, {
         name: 1,
         advertiserId: 1,
         storyId: 1,
@@ -79,7 +78,7 @@ module.exports = {
       }
     }));
 
-    const itemsToReturn = await Promise.all(lineItemsToReturn.map(async (lineItem, index) => {
+    const itemsToReturn = await Promise.all(lineItems.map(async (lineItem, index) => {
       const campaign = campaigns[index];
       const advertiser = advertisers[index];
       const creative = creatives[index];
@@ -156,12 +155,12 @@ module.exports = {
    * @param {string} params.placementId
    * @param {Date} params.date
    */
-  async getLineItemsFor({ placementId, date: d } = {}) {
+  async getLineItemsFor({ placementId, date: d, limit } = {}) {
     if (!placementId) throw createError(400, 'No placement ID was provided.');
     if (!d) throw createError(400, 'No date was provided.');
     const { $d: date } = dayjs(d).tz('UTC');
 
-    // find the _first_ matching line item. if more than one, pick the oldest (i.e. sort by _id).
+    // find all matching line items if more than one, sort by _id (i.e oldest to newest).
     return EmailLineItem.find({
       $or: [
         { 'dates.start': { $lte: date }, 'dates.end': { $gte: date } },
@@ -176,7 +175,7 @@ module.exports = {
       campaignId: 1,
       createdAt: 1,
       updatedAt: 1,
-    }, { sort: { _id: 1 } });
+    }, { sort: { _id: 1 }, limit });
   },
 
   /**
