@@ -453,6 +453,7 @@ module.exports = {
 
     return {
       placementId: placement.id,
+      storyId: campaign.storyId || null,
       hasCampaign: true,
       attributes: this.buildHTMLAttributes({ event, campaign, creative }),
       href: await this.getClickUrl(campaign, placement, creative),
