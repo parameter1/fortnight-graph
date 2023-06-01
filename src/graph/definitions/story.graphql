@@ -1,6 +1,7 @@
 type Query {
   allStories(pagination: PaginationInput = {}, sort: StorySortInput = {}): StoryConnection!
   advertiserStories(input: AdvertiserStoriesInput!, pagination: PaginationInput = {}, sort: StorySortInput = {}): StoryConnection!
+  publisherStories(input: PublisherStoriesInput!, pagination: PaginationInput = {}, sort: StorySortInput = {}): StoryConnection!
   publishedStories(pagination: PaginationInput = {}, sort: StorySortInput = {}): StoryConnection!
   searchStories(pagination: PaginationInput = {}, phrase: String!): StoryConnection!
   autocompleteStories(pagination: PaginationInput = {}, phrase: String!): StoryConnection!
@@ -168,6 +169,11 @@ input StoryPayloadInput {
   advertiserId: String!
   publisherId: String!
   publishedAt: Date
+}
+
+input PublisherStoriesInput {
+  domainName: String
+  website: String
 }
 
 input CreateStoryInput {
