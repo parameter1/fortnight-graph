@@ -163,6 +163,23 @@ module.exports = {
     /**
      *
      */
+    publisherStories: async (root, { input, pagination, sort }) => {
+      const { domainName, website } = input;
+      const { id: publisherId } = (!website && !domainName)
+        ? {}
+        : await Publisher.strictFindActiveOne({
+          ...(website && { website }),
+          ...(domainName && { domainName }),
+        });
+      const criteria = {
+        ...(publisherId && { publisherId }),
+      };
+      return Story.paginate({ criteria, pagination, sort });
+    },
+
+    /**
+     *
+     */
     publishedStory: async (root, { input }) => {
       const { id, preview } = input;
       const story = await Story.strictFindActiveById(id);
