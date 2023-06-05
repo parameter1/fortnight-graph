@@ -172,6 +172,9 @@ module.exports = {
           ...(domainName && { domainName }),
         });
       const criteria = {
+        deleted: false,
+        publishedAt: { $lte: new Date() },
+        placeholder: false,
         ...(publisherId && { publisherId }),
       };
       return Story.paginate({ criteria, pagination, sort });
