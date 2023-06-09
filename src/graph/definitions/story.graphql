@@ -147,7 +147,8 @@ input StoryHashInput {
 }
 
 input AdvertiserStoriesInput {
-  advertiserId: String!
+  advertiserId: String
+  externalId: String
   publisherId: String
   excludeStoryIds: [String]
 }

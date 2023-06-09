@@ -216,14 +216,20 @@ module.exports = {
     advertiserStories: async (root, { input, pagination, sort }) => {
       const {
         advertiserId,
+        externalId,
         publisherId,
         excludeStoryIds,
       } = input;
+      // set id(advertiserId) based externalId look up or by it bein passed.
+      const id = (externalId && !advertiserId)
+        ? await Advertiser.find({ externalId })
+        : advertiserId;
+
       const criteria = {
         deleted: false,
         placeholder: false,
         publishedAt: { $lte: new Date() },
-        advertiserId,
+        advertiserId: id,
         ...(publisherId && { publisherId }),
         ...(excludeStoryIds && { _id: { $nin: excludeStoryIds } }),
       };
