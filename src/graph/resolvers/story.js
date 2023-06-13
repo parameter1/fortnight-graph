@@ -231,12 +231,12 @@ module.exports = {
           // eslint-disable-next-line prefer-destructuring
           id = advertiser.id;
         } else {
-          throw new Error(`No advertiser found with externalId '${externalId}'`);
+          throw new Error(`No advertiser found with External ID '${externalId}'`);
         }
       }
 
       if (!id) {
-        throw new Error(`No advertiser found with advertiserId '${advertiserId}'`);
+        throw new Error(`No advertiser found with Advertiser ID '${advertiserId}'`);
       }
 
       const criteria = {
