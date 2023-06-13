@@ -225,6 +225,10 @@ module.exports = {
         ? await Advertiser.find({ externalId })
         : advertiserId;
 
+      if (!id) {
+        throw new Error(`No advertiser found for ID '${id}'`);
+      }
+
       const criteria = {
         deleted: false,
         placeholder: false,
