@@ -69,6 +69,9 @@ const schema = new Schema({
     validate: {
       validator(v) {
         if (!v) return true;
+        // check if the url starts with mailto: and has a valid email address after that.
+        if (validator.isEmail(v.toLowerCase().replace('mailto:', ''))) return true;
+
         return validator.isURL(v, {
           protocols: ['http', 'https'],
           require_protocol: true,
