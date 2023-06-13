@@ -219,14 +219,30 @@ module.exports = {
     advertiserStories: async (root, { input, pagination, sort }) => {
       const {
         advertiserId,
+        externalId,
         publisherId,
         excludeStoryIds,
       } = input;
+
+      if (!advertiserId && !externalId) throw new Error('Either a advertiserId or externalId input must be provided.');
+      if (advertiserId && externalId) throw new Error('You cannot provide both advertiserId and externalId as input.');
+
+      let id = advertiserId;
+      if (externalId) {
+        const advertiser = await Advertiser.findOne({ externalId });
+        if (advertiser) {
+          // eslint-disable-next-line prefer-destructuring
+          id = advertiser.id;
+        }
+      }
+
+      if (!id) throw new Error(`No advertiser found with External ID '${externalId}'`);
+
       const criteria = {
         deleted: false,
         placeholder: false,
         publishedAt: { $lte: new Date() },
-        advertiserId,
+        advertiserId: id,
         ...(publisherId && { publisherId }),
         ...(excludeStoryIds && { _id: { $nin: excludeStoryIds } }),
       };
