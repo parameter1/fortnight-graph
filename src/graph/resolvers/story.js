@@ -220,13 +220,19 @@ module.exports = {
         publisherId,
         excludeStoryIds,
       } = input;
+
+      if (!advertiserId && !externalId) throw new Error('Either a advertiserId or externalId input must be provided.');
+      if (advertiserId && externalId) throw new Error('You cannot provide both advertiserId and externalId as input.');
+
       // set id(advertiserId) based externalId look up or by it bein passed.
       const id = (externalId && !advertiserId)
         ? await Advertiser.find({ externalId })
         : advertiserId;
 
-      if (!id) {
-        throw new Error(`No advertiser found for ID '${id}'`);
+      if (!id && externalId) {
+        throw new Error(`No advertiser found with externalId '${externalId}'`);
+      } else if (!id) {
+        throw new Error(`No advertiser found with advertiserId '${advertiserId}'`);
       }
 
       const criteria = {
