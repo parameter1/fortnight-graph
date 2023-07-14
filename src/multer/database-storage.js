@@ -1,10 +1,24 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable class-methods-use-this */
 const multerS3 = require('multer-s3');
+const fetch = require('node-fetch');
 const s3 = require('../connections/s3');
 const Image = require('../models/image');
 
 const { S3_BUCKET, S3_OBJECT_ACL } = require('../env');
+
+const getImgixData = async (image) => {
+  try {
+    const url = `${await image.getSrc()}?fm=json`;
+    const data = await fetch(url);
+    const body = await data.json();
+    return body;
+  } catch (e) {
+    const { error } = console;
+    error('Unable to parse imgix data for upload', e);
+    return { error: e };
+  }
+};
 
 const uploadToS3 = (req, file, image) => new Promise((resolve, reject) => {
   const storage = multerS3({
@@ -48,6 +62,7 @@ class DatabaseStorage {
         size,
         uploadedAt: new Date(),
         s3: { location, bucket },
+        imgix: await getImgixData(image),
       });
       await image.save();
 
