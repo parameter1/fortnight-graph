@@ -2,6 +2,7 @@
 /* eslint-disable class-methods-use-this */
 const multerS3 = require('multer-s3');
 const fetch = require('node-fetch');
+const newrelic = require('../newrelic');
 const s3 = require('../connections/s3');
 const Image = require('../models/image');
 
@@ -11,12 +12,19 @@ const getImgixData = async (image) => {
   try {
     const url = `${await image.getSrc()}?fm=json`;
     const data = await fetch(url);
+    if (!data.ok) {
+      const error = new Error(data.statusText);
+      error.status = data.status;
+      throw error;
+    }
     const body = await data.json();
     return body;
   } catch (e) {
     const { error } = console;
-    error('Unable to parse imgix data for upload', e);
-    return { error: e };
+    error('Unable to parse imgix data for upload', e.message);
+    newrelic.noticeError(e);
+    if (e.status) return { error: true, status: e.status };
+    throw e;
   }
 };
 
