@@ -38,6 +38,9 @@ const schema = new Schema({
     bucket: String,
     location: String,
   },
+  imgix: {
+    type: Object,
+  },
   uploadedAt: {
     type: Date,
   },
