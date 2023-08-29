@@ -1,15 +1,21 @@
 const { titleize, underscore } = require('inflection');
 const moment = require('moment-timezone');
-const env = require('../env');
+const { GA_VIEW_ID, REPORTING_SERVICE_URL } = require('../env');
 const { google, auth } = require('../connections/google');
+const { serviceClient } = require('../utils');
 
 const { isArray } = Array;
-const { GA_VIEW_ID } = env;
 // The timezone that the GA view is configured
 const VIEW_TZ = 'America/Chicago';
-
 let conn;
+const reportingClient = serviceClient({ url: REPORTING_SERVICE_URL });
+
 module.exports = {
+  /**
+   *
+   */
+  reportingClient,
+
   async connect() {
     if (!conn) {
       conn = google.analyticsreporting({
