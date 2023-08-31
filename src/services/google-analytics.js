@@ -1,3 +1,4 @@
+const debug = require('debug')('google-analytics');
 const { titleize, underscore } = require('inflection');
 const moment = require('moment-timezone');
 const { GA_VIEW_ID, REPORTING_SERVICE_URL } = require('../env');
@@ -10,6 +11,25 @@ const VIEW_TZ = 'America/Chicago';
 const GA4_START_DATE = new Date('2023-07-01T00:00:00-05:00');
 let conn;
 const reportingClient = serviceClient({ url: REPORTING_SERVICE_URL });
+
+/**
+ *
+ */
+const shouldUseGa4 = ({ startDate, endDate }) => {
+  if (startDate <= GA4_START_DATE) return true;
+  if (endDate >= GA4_START_DATE) return true;
+  return false;
+};
+
+/**
+ *
+ */
+const shouldUseUA = ({ startDate, endDate }) => {
+  console.log({ startDate, endDate, GA4_START_DATE });
+  if (endDate <= GA4_START_DATE) return true;
+  if (startDate <= GA4_START_DATE) return true;
+  return false;
+};
 
 module.exports = {
   /**
@@ -37,44 +57,90 @@ module.exports = {
    */
   async storyReportByDay(storyId, { startDate, endDate, quotaUser }) {
     if (!storyId) throw new Error('No story ID was provided.');
-    const dateRanges = [this.formatDates({ startDate, endDate })];
-    const dimensions = [{ name: 'ga:date' }];
-    const dimensionFilterClauses = [
-      { filters: [this.getStoryFilter(storyId)] },
-    ];
+    const { useGa4, useUA } = this.detectServices({ startDate, endDate });
+    debug('storyReportByDay', { useGa4, useUA });
 
-    const request = {
-      viewId: GA_VIEW_ID,
-      dateRanges,
-      dimensions,
-      metrics: this.getStandardMetrics(),
-      dimensionFilterClauses,
-      includeEmptyRows: true,
-      hideTotals: true,
-      hideValueRanges: true,
+    const getUaMetrics = async () => {
+      const dateRanges = [this.formatDates({ startDate, endDate })];
+      const dimensions = [{ name: 'ga:date' }];
+      const dimensionFilterClauses = [
+        { filters: [this.getStoryFilter(storyId)] },
+      ];
+
+      const request = {
+        viewId: GA_VIEW_ID,
+        dateRanges,
+        dimensions,
+        metrics: this.getStandardMetrics(),
+        dimensionFilterClauses,
+        includeEmptyRows: true,
+        hideTotals: true,
+        hideValueRanges: true,
+      };
+      const data = await this.sendReportRequests(request, { quotaUser });
+      return this.formatReport(data.reports[0], {
+        date: v => moment(v),
+      });
     };
-    const data = await this.sendReportRequests(request, { quotaUser });
-    return this.formatReport(data.reports[0], {
-      date: v => moment(v),
+
+    const getGA4Metrics = async () => {
+      const report = await this.reportingClient.request('storyReportByDay', { storyId, startDate, endDate });
+      return this.formatReportGA4(report, {
+        date: v => moment(v),
+      });
+    };
+
+    if (!useGa4) return getUaMetrics();
+    if (!useUA) return getGA4Metrics();
+    // @todo
+    return this.mergeRows(getUaMetrics(), getGA4Metrics());
+  },
+
+  /**
+   *
+   */
+  detectServices({ startDate, endDate }) {
+    const useGa4 = shouldUseGa4({ startDate, endDate });
+    const useUA = shouldUseUA({ startDate, endDate });
+    return { useGa4, useUA };
+  },
+
+  /**
+   *
+   */
+  async mergeMetrics(uap, gap) {
+    const ua = await uap;
+    const ga = await gap;
+    const metrics = Object.keys(ua.metrics).reduce((o, k) => {
+      const uav = ua.metrics[k] || 0;
+      const gav = ga.metrics[k] || 0;
+      let v = uav + gav;
+      // Average if both datasets have values, or else use whichever one has a value.
+      // eslint-disable-next-line no-mixed-operators
+      if (/^avg/.test(k)) v = (gav > 0 < uav) ? v / 2 : (uav || gav);
+      return { ...o, [k]: v };
+    }, {});
+    debug('mergeMetrics', { ua: ua.metrics, ga4: ga.metrics, merged: metrics });
+    return { metrics };
+  },
+
+  /**
+   *
+   */
+  async mergeRows(uap, gap) {
+    const map = new Map();
+    const ua = await uap;
+    const ga = await gap;
+    [...ua, ...ga].forEach((r, i) => {
+      const k = r.date ? r.date.valueOf() : i;
+      if (!map.has(k)) {
+        map.set(k, r);
+      } else if (r.metrics.pageviews !== 0) {
+        map.set(k, r);
+      }
     });
-  },
-
-  /**
-   *
-   */
-  shouldUseGa4({ startDate, endDate }) {
-    if (startDate <= GA4_START_DATE) return true;
-    if (endDate >= GA4_START_DATE) return true;
-    return false;
-  },
-
-  /**
-   *
-   */
-  shouldUseUA({ startDate, endDate }) {
-    if (endDate <= GA4_START_DATE) return true;
-    if (startDate <= GA4_START_DATE) return true;
-    return false;
+    debug(ua.length, ga.length, map.size);
+    return [...map.values()];
   },
 
   /**
@@ -87,9 +153,8 @@ module.exports = {
    */
   async storyReport(storyId, { startDate, endDate, quotaUser }) {
     if (!storyId) throw new Error('No story ID was provided.');
-    const useGa4 = this.shouldUseGa4({ startDate, endDate });
-    const useUA = this.shouldUseUA({ startDate, endDate });
-    console.log('storyReport', { useGa4, useUA });
+    const { useGa4, useUA } = this.detectServices({ startDate, endDate });
+    debug('storyReport', { useGa4, useUA });
 
     const getUaMetrics = async () => {
       const dateRanges = [this.formatUADates({ startDate, endDate })];
@@ -118,25 +183,9 @@ module.exports = {
       return rows[0];
     };
 
-    const merge = async (uap, gap) => {
-      const ua = await uap;
-      const ga = await gap;
-      const metrics = Object.keys(ua.metrics).reduce((o, k) => {
-        const uav = ua.metrics[k] || 0;
-        const gav = ga.metrics[k] || 0;
-        let v = uav + gav;
-        // Average if both datasets have values, or else use whichever one has a value.
-        // eslint-disable-next-line no-mixed-operators
-        if (/^avg/.test(k)) v = (gav > 0 < uav) ? v / 2 : (uav || gav);
-        return { ...o, [k]: v };
-      }, {});
-      console.log('storyReport', { ua: ua.metrics, ga4: ga.metrics, merged: metrics });
-      return { metrics };
-    };
-
     if (!useGa4) return getUaMetrics();
     if (!useUA) return getGA4Metrics();
-    return merge(getUaMetrics(), getGA4Metrics());
+    return this.mergeMetrics(getUaMetrics(), getGA4Metrics());
   },
 
   /**
@@ -201,14 +250,14 @@ module.exports = {
 
   formatReportGA4(report, formatters = {}) {
     const dimensionEntries = (report.dimensionHeaders || [])
-      .map(name => this.createKeyGA4(name));
+      .map(({ name }) => this.createKeyGA4(name));
     const metricHeaderEntries = (report.metricHeaders || [])
       .map(o => ({ ...o, key: this.createKeyGA4(o.name) }));
     const rows = report.rows || [];
 
     return rows.reduce((arr, { dimensionValues, metricValues }) => {
       arr.push({
-        ...dimensionValues.reduce((obj, value, index) => {
+        ...dimensionValues.reduce((obj, { value }, index) => {
           const key = dimensionEntries[index];
           const fn = formatters[key];
           return { ...obj, [key]: this.formatValue(value, fn) };
@@ -291,7 +340,6 @@ module.exports = {
     const res = await api.reports.batchGet({
       requestBody: { reportRequests },
     }, { params });
-    // console.log('sendReportRequests', res.data);
     return res.data;
   },
 

@@ -43,7 +43,7 @@ module.exports = {
       return ga.storyReportByDay(story.id, {
         quotaUser: quotaUser(ctx),
         endDate,
-        startDate: getMetricStartDate(publishedAt, startDate),
+        startDate, // getMetricStartDate(publishedAt, startDate),
       });
     },
 
