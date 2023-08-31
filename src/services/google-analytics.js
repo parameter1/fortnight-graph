@@ -241,24 +241,38 @@ module.exports = {
    */
   async storyDeviceReport(storyId, { startDate, endDate, quotaUser }) {
     if (!storyId) throw new Error('No story ID was provided.');
-    const dateRanges = [this.formatDates({ startDate, endDate })];
-    const dimensions = [{ name: 'ga:deviceCategory' }];
-    const dimensionFilterClauses = [
-      { filters: [this.getStoryFilter(storyId)] },
-    ];
+    const { useGa4, useUA } = this.detectServices({ startDate, endDate });
+    debug('storyDeviceReport', { useGa4, useUA });
 
-    const request = {
-      viewId: GA_VIEW_ID,
-      dateRanges,
-      dimensions,
-      metrics: this.getStandardMetrics(),
-      dimensionFilterClauses,
-      includeEmptyRows: true,
-      hideTotals: true,
-      hideValueRanges: true,
+    const getUaMetrics = async () => {
+      const dateRanges = [this.formatDates({ startDate, endDate })];
+      const dimensions = [{ name: 'ga:deviceCategory' }];
+      const dimensionFilterClauses = [
+        { filters: [this.getStoryFilter(storyId)] },
+      ];
+
+      const request = {
+        viewId: GA_VIEW_ID,
+        dateRanges,
+        dimensions,
+        metrics: this.getStandardMetrics(),
+        dimensionFilterClauses,
+        includeEmptyRows: true,
+        hideTotals: true,
+        hideValueRanges: true,
+      };
+      const data = await this.sendReportRequests(request, { quotaUser });
+      return this.formatReport(data.reports[0]);
     };
-    const data = await this.sendReportRequests(request, { quotaUser });
-    return this.formatReport(data.reports[0]);
+
+    const getGA4Metrics = async () => {
+      const report = await this.reportingClient.request('storyDeviceReport', { storyId, startDate, endDate });
+      return this.formatReportGA4(report);
+    };
+
+    if (!useGa4) return getUaMetrics();
+    if (!useUA) return getGA4Metrics();
+    return this.mergeRows(getUaMetrics(), getGA4Metrics());
   },
 
   formatReportGA4(report, formatters = {}) {
