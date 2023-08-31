@@ -7,6 +7,7 @@ const { serviceClient } = require('../utils');
 const { isArray } = Array;
 // The timezone that the GA view is configured
 const VIEW_TZ = 'America/Chicago';
+const GA4_START_DATE = new Date('2023-07-01T00:00:00-05:00');
 let conn;
 const reportingClient = serviceClient({ url: REPORTING_SERVICE_URL });
 
@@ -60,6 +61,24 @@ module.exports = {
 
   /**
    *
+   */
+  shouldUseGa4({ startDate, endDate }) {
+    if (startDate <= GA4_START_DATE) return true;
+    if (endDate >= GA4_START_DATE) return true;
+    return false;
+  },
+
+  /**
+   *
+   */
+  shouldUseUA({ startDate, endDate }) {
+    if (endDate <= GA4_START_DATE) return true;
+    if (startDate <= GA4_START_DATE) return true;
+    return false;
+  },
+
+  /**
+   *
    * @param {string} storyId
    * @param {object} params
    * @param {string|Date} params.startDate
@@ -68,23 +87,56 @@ module.exports = {
    */
   async storyReport(storyId, { startDate, endDate, quotaUser }) {
     if (!storyId) throw new Error('No story ID was provided.');
-    const dateRanges = [this.formatDates({ startDate, endDate })];
-    const dimensionFilterClauses = [
-      { filters: [this.getStoryFilter(storyId)] },
-    ];
+    const useGa4 = this.shouldUseGa4({ startDate, endDate });
+    const useUA = this.shouldUseUA({ startDate, endDate });
+    console.log('storyReport', { useGa4, useUA });
 
-    const request = {
-      viewId: GA_VIEW_ID,
-      dateRanges,
-      metrics: this.getStandardMetrics(),
-      dimensionFilterClauses,
-      includeEmptyRows: true,
-      hideTotals: true,
-      hideValueRanges: true,
+    const getUaMetrics = async () => {
+      const dateRanges = [this.formatUADates({ startDate, endDate })];
+
+      const dimensionFilterClauses = [
+        { filters: [this.getStoryFilter(storyId)] },
+      ];
+
+      const request = {
+        viewId: GA_VIEW_ID,
+        dateRanges,
+        metrics: this.getStandardMetrics(),
+        dimensionFilterClauses,
+        includeEmptyRows: true,
+        hideTotals: true,
+        hideValueRanges: true,
+      };
+      const data = await this.sendReportRequests(request, { quotaUser });
+      const rows = this.formatReport(data.reports[0]);
+      return rows[0];
     };
-    const data = await this.sendReportRequests(request, { quotaUser });
-    const rows = this.formatReport(data.reports[0]);
-    return rows[0];
+
+    const getGA4Metrics = async () => {
+      const report = await this.reportingClient.request('storyReport', { storyId, startDate, endDate });
+      const rows = this.formatReportGA4(report);
+      return rows[0];
+    };
+
+    const merge = async (uap, gap) => {
+      const ua = await uap;
+      const ga = await gap;
+      const metrics = Object.keys(ua.metrics).reduce((o, k) => {
+        const uav = ua.metrics[k] || 0;
+        const gav = ga.metrics[k] || 0;
+        let v = uav + gav;
+        // Average if both datasets have values, or else use whichever one has a value.
+        // eslint-disable-next-line no-mixed-operators
+        if (/^avg/.test(k)) v = (gav > 0 < uav) ? v / 2 : (uav || gav);
+        return { ...o, [k]: v };
+      }, {});
+      console.log('storyReport', { ua: ua.metrics, ga4: ga.metrics, merged: metrics });
+      return { metrics };
+    };
+
+    if (!useGa4) return getUaMetrics();
+    if (!useUA) return getGA4Metrics();
+    return merge(getUaMetrics(), getGA4Metrics());
   },
 
   /**
@@ -147,6 +199,29 @@ module.exports = {
     return this.formatReport(data.reports[0]);
   },
 
+  formatReportGA4(report, formatters = {}) {
+    const dimensionEntries = (report.dimensionHeaders || [])
+      .map(name => this.createKeyGA4(name));
+    const metricHeaderEntries = (report.metricHeaders || [])
+      .map(o => ({ ...o, key: this.createKeyGA4(o.name) }));
+    const rows = report.rows || [];
+
+    return rows.reduce((arr, { dimensionValues, metricValues }) => {
+      arr.push({
+        ...dimensionValues.reduce((obj, value, index) => {
+          const key = dimensionEntries[index];
+          const fn = formatters[key];
+          return { ...obj, [key]: this.formatValue(value, fn) };
+        }, {}),
+        metrics: metricValues.reduce((obj, { value }, index) => {
+          const { key } = metricHeaderEntries[index];
+          return { ...obj, [key]: Number(value) };
+        }, {}),
+      });
+      return arr;
+    }, []);
+  },
+
   formatReport(report, formatters = {}) {
     const { columnHeader } = report;
 
@@ -182,6 +257,21 @@ module.exports = {
     return titleize(underscore(this.createKey(name)));
   },
 
+  createKeyGA4(name) {
+    const map = new Map([
+      ['screenPageViews', 'pageviews'],
+      // ga:uniquePageviews
+      ['sessions', 'sessions'],
+      ['totalUsers', 'users'],
+      ['averageSessionDuration', 'avgSessionDuration'],
+      ['bounceRate', 'bouncerate'],
+      // ga:timeOnPage
+      ['userEngagementDuration', 'avgTimeOnPage'],
+      ['countCustomEvent:ua_metric_1', 'shares'],
+    ]);
+    return map.get(name) || name;
+  },
+
   createKey(name) {
     const map = {
       metric1: 'shares',
@@ -201,6 +291,7 @@ module.exports = {
     const res = await api.reports.batchGet({
       requestBody: { reportRequests },
     }, { params });
+    // console.log('sendReportRequests', res.data);
     return res.data;
   },
 
@@ -208,6 +299,24 @@ module.exports = {
     return {
       startDate: this.formatDate(startDate),
       endDate: this.formatDate(endDate),
+    };
+  },
+
+  formatUADates({ startDate, endDate }) {
+    const maxStart = moment(startDate).isAfter(GA4_START_DATE) ? GA4_START_DATE : startDate;
+    const maxEnd = moment(endDate).isBefore(GA4_START_DATE) ? endDate : GA4_START_DATE;
+    return {
+      startDate: this.formatDate(maxStart),
+      endDate: this.formatDate(maxEnd),
+    };
+  },
+
+  formatGA4Dates({ startDate, endDate }) {
+    const minStart = moment(startDate).isBefore(GA4_START_DATE) ? GA4_START_DATE : startDate;
+    const minEnd = moment(endDate).isAfter(GA4_START_DATE) ? endDate : GA4_START_DATE;
+    return {
+      startDate: this.formatDate(minStart),
+      endDate: this.formatDate(minEnd),
     };
   },
 

@@ -48,7 +48,7 @@ module.exports = cleanEnv(process.env, {
   NEW_RELIC_LICENSE_KEY: nonemptystr({ desc: 'The license key for New Relic.', devDefault: '(unset)' }),
   PORT: port({ desc: 'The port that express will run on.', default: 80 }),
   REDIS_DSN: redisdsn({ desc: 'The Redis DSN to connect to.' }),
-  REPORTING_SERVICE_URL: url({ desc: 'The URL where the reporting service can be accessed.', devDefault: 'http://host.docker.internal:8110', default: 'http://reporting' }),
+  REPORTING_SERVICE_URL: url({ desc: 'The URL where the reporting service can be accessed.', devDefault: 'http://reporting.dev.parameter1.com:8110', default: 'http://reporting' }),
   SENDGRID_API_KEY: nonemptystr({ desc: 'The SendGrid API key for sending email.' }),
   SENDGRID_FROM: nonemptystr({ desc: 'The from name to use when sending email via SendGrid, e.g. Foo <foo@bar.com>' }),
   TRUSTED_PROXIES: str({ desc: 'A comma seperated list of trusted proxy IP addresses.', default: '' }),
