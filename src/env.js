@@ -26,7 +26,7 @@ const nonemptystr = makeValidator((v) => {
   return trimmed;
 });
 
-module.exports = cleanEnv(process.env, {
+const env = cleanEnv(process.env, {
   ACCOUNT_KEY: nonemptystr({ desc: 'The account/tenant key. Is used for querying the account information and settings from the core database connection.' }),
   AWS_ACCESS_KEY_ID: nonemptystr({ desc: 'The AWS access key value.' }),
   AWS_SECRET_ACCESS_KEY: nonemptystr({ desc: 'The AWS secret access key value.' }),
@@ -52,3 +52,7 @@ module.exports = cleanEnv(process.env, {
   SENDGRID_FROM: nonemptystr({ desc: 'The from name to use when sending email via SendGrid, e.g. Foo <foo@bar.com>' }),
   TRUSTED_PROXIES: str({ desc: 'A comma seperated list of trusted proxy IP addresses.', default: '' }),
 });
+
+process.env.NEW_RELIC_ENABLED = env.NEW_RELIC_ENABLED;
+
+module.exports = env;

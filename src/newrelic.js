@@ -1,5 +1,7 @@
-const env = require('./env');
+require('./env');
+const newrelic = require('newrelic');
+const { ACCOUNT_KEY } = require('./env.js');
 
-process.env.NEW_RELIC_ENABLED = env.NEW_RELIC_ENABLED;
+newrelic.addCustomAttribute({ accountKey: ACCOUNT_KEY });
 
-module.exports = require('newrelic');
+module.exports = newrelic;
