@@ -3,7 +3,7 @@ const passport = require('passport');
 const cors = require('cors');
 const authStrategies = require('./auth-strategies');
 const loadRouters = require('./routers');
-const { TRUSTED_PROXIES } = require('./env');
+const { ACCOUNT_KEY, TRUSTED_PROXIES } = require('./env');
 
 const app = express();
 const CORS = cors();
@@ -41,6 +41,11 @@ app.options('*', CORS);
 // Redirect root domain requests to the app.
 app.get('/', (req, res) => {
   res.redirect(301, '/app');
+});
+
+app.use((_, res, next) => {
+  res.set('X-Account-Key', ACCOUNT_KEY);
+  next();
 });
 
 loadRouters(app);
