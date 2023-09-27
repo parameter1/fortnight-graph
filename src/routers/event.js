@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { ACCOUNT_KEY } = require('../env');
 const noCacheEvents = require('../middleware/no-cache-events');
 const newrelic = require('../newrelic');
 const analyticsService = require('../services/analytics');
@@ -8,9 +9,15 @@ const emptyGif = Buffer.from('R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAA
 const router = Router();
 router.use(noCacheEvents());
 
+const noticeError = (err) => {
+  const error = new Error(`Analytics error for account ${ACCOUNT_KEY}: ${err.message}`);
+  error.originalError = err;
+  newrelic.noticeError(error);
+};
+
 const send = (res, status, err) => {
   if (err) {
-    newrelic.noticeError(err);
+    noticeError(err);
   }
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Content-Type', 'image/gif');
@@ -27,7 +34,7 @@ const trackEvent = (req, res) => {
     fields: req.query,
     ua: req.get('User-Agent'),
     ip: req.ip,
-  }).catch(newrelic.noticeError.bind(newrelic));
+  }).catch(noticeError);
   send(res, 200);
 };
 
