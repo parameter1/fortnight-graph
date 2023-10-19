@@ -12,7 +12,7 @@ module.exports = async (story, publisher, params) => {
   const uri = publisher.customUri || account.storyUri;
   const url = `${uri.replace(/\/+$/g, '')}/${path.replace(/^\/+/g, '').replace(/\/+$/g, '')}`;
   if (params && typeof params === 'object') {
-    return `${url}/?${querystring.stringify(params)}`;
+    return `${url}?${querystring.stringify(params)}`;
   }
   return url;
 };

@@ -32,7 +32,7 @@ describe('utils/story-url', function() {
       foo: 'bar',
       baz: true,
     };
-    expect(storyUrl({}, {}, params)).to.eventually.equal('https://www.google.com/foo/bar/?foo=bar&baz=true');
+    expect(storyUrl({}, {}, params)).to.eventually.equal('https://www.google.com/foo/bar?foo=bar&baz=true');
   });
   it('should not set the parameters when `params` is not an object.', async function() {
     expect(storyUrl({}, {}, '1234')).to.eventually.equal('https://www.google.com/foo/bar');
