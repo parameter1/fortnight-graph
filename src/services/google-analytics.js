@@ -292,7 +292,7 @@ module.exports = {
         metrics: metricValues.reduce((obj, { value }, index) => {
           const { key } = metricHeaderEntries[index];
           return { ...obj, [key]: Number(value) };
-        }, {}),
+        }, { timeOnPage: 0 }),
       });
       return arr;
     }, []);
