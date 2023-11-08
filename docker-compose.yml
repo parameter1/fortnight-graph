@@ -34,6 +34,8 @@ services:
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       SENDGRID_FROM: ${SENDGRID_FROM}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS-[]}
+      REPORTING_SERVICE_URL: ${REPORTING_SERVICE_URL-http://host.docker.internal:8110}
+
   redis:
     image: redis:alpine
   mongo:
