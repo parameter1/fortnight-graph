@@ -1,6 +1,6 @@
 type Mutation {
-  imageDimensions(input: ImageDimensionsInput!): Image!
-  imageFocalPoint(input: ImageFocalPointInput!): Image!
+  imageDimensions(input: ImageDimensionsInput!): Image! @readOnly
+  imageFocalPoint(input: ImageFocalPointInput!): Image! @readOnly
 }
 
 type Image {

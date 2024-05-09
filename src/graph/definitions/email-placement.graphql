@@ -6,9 +6,9 @@ type Query {
 }
 
 type Mutation {
-  createEmailPlacement(input: CreateEmailPlacementInput!): EmailPlacement!
-  updateEmailPlacement(input: UpdateEmailPlacementInput!): EmailPlacement!
-  deleteEmailPlacement(input: ModelIdInput!): String!
+  createEmailPlacement(input: CreateEmailPlacementInput!): EmailPlacement! @readOnly
+  updateEmailPlacement(input: UpdateEmailPlacementInput!): EmailPlacement! @readOnly
+  deleteEmailPlacement(input: ModelIdInput!): String! @readOnly
 }
 
 enum EmailPlacementSortField {

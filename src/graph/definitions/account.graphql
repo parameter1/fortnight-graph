@@ -3,7 +3,7 @@ type Query {
 }
 
 type Mutation {
-  updateAccount(input: UpdateAccountInput!): Account!
+  updateAccount(input: UpdateAccountInput!): Account! @readOnly
 }
 
 type Account {

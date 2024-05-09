@@ -6,10 +6,10 @@ type Query {
 }
 
 type Mutation {
-  createPublisher(input: CreatePublisherInput!): Publisher!
-  updatePublisher(input: UpdatePublisherInput!): Publisher!
-  publisherLogo(input: PublisherLogoInput!): Publisher!
-  deletePublisher(input: ModelIdInput!): String!
+  createPublisher(input: CreatePublisherInput!): Publisher! @readOnly
+  updatePublisher(input: UpdatePublisherInput!): Publisher! @readOnly
+  publisherLogo(input: PublisherLogoInput!): Publisher! @readOnly
+  deletePublisher(input: ModelIdInput!): String! @readOnly
 }
 
 enum PublisherSortField {

@@ -6,9 +6,9 @@ type Query {
 }
 
 type Mutation {
-  createPlacement(input: CreatePlacementInput!): Placement!
-  updatePlacement(input: UpdatePlacementInput!): Placement!
-  deletePlacement(input: ModelIdInput!): String!
+  createPlacement(input: CreatePlacementInput!): Placement! @readOnly
+  updatePlacement(input: UpdatePlacementInput!): Placement! @readOnly
+  deletePlacement(input: ModelIdInput!): String! @readOnly
 }
 
 enum PlacementSortField {

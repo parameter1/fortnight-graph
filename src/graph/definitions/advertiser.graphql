@@ -7,14 +7,14 @@ type Query {
 }
 
 type Mutation {
-  createAdvertiser(input: CreateAdvertiserInput!): Advertiser!
-  updateAdvertiser(input: UpdateAdvertiserInput!): Advertiser!
-  deleteAdvertiser(input: ModelIdInput!): String!
-  undeleteAdvertiser(input: ModelIdInput!): Advertiser!
+  createAdvertiser(input: CreateAdvertiserInput!): Advertiser! @readOnly
+  updateAdvertiser(input: UpdateAdvertiserInput!): Advertiser! @readOnly
+  deleteAdvertiser(input: ModelIdInput!): String! @readOnly
+  undeleteAdvertiser(input: ModelIdInput!): Advertiser! @readOnly
 
-  advertiserLogo(input: AdvertiserLogoInput!): Advertiser!
+  advertiserLogo(input: AdvertiserLogoInput!): Advertiser! @readOnly
 
-  setAdvertiserContacts(input: SetContactsInput!): Advertiser!
+  setAdvertiserContacts(input: SetContactsInput!): Advertiser! @readOnly
 }
 
 enum AdvertiserSortField {
