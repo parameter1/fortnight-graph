@@ -13,6 +13,18 @@ module.exports = {
   /**
    *
    */
+  Authentication: {
+    /**
+     *
+     */
+    locked(_, __, { locked }) {
+      return locked;
+    },
+  },
+
+  /**
+   *
+   */
   UserConnection: paginationResolvers.connection,
 
   /**

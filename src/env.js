@@ -47,6 +47,7 @@ const env = cleanEnv(process.env, {
   NEW_RELIC_ENABLED: bool({ desc: 'Whether New Relic is enabled.', default: true, devDefault: false }),
   NEW_RELIC_LICENSE_KEY: nonemptystr({ desc: 'The license key for New Relic.', devDefault: '(unset)' }),
   PORT: port({ desc: 'The port that express will run on.', default: 80 }),
+  READ_ONLY: bool({ desc: 'Whether the instance is in read only mode.', default: false }),
   REDIS_DSN: redisdsn({ desc: 'The Redis DSN to connect to.' }),
   REPORTING_SERVICE_URL: url({ desc: 'The URL where the reporting service can be accessed.', devDefault: 'http://reporting.dev.parameter1.com:8110', default: 'http://reporting' }),
   SENDGRID_API_KEY: nonemptystr({ desc: 'The SendGrid API key for sending email.' }),

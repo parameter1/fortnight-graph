@@ -35,6 +35,7 @@ services:
       SENDGRID_FROM: ${SENDGRID_FROM}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS-[]}
       REPORTING_SERVICE_URL: ${REPORTING_SERVICE_URL-http://host.docker.internal:8110}
+      READ_ONLY: ${READ_ONLY-0}
 
   redis:
     image: redis:alpine
