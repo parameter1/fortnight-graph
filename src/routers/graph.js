@@ -9,6 +9,7 @@ const schema = require('../graph/schema');
 const Advertiser = require('../models/advertiser');
 const Campaign = require('../models/campaign');
 const asyncRoute = require('../utils/async-route');
+const { READ_ONLY } = require('../env');
 
 /**
  * Authenticates a user via the `Authorization: Bearer` JWT.
@@ -71,7 +72,12 @@ router.use(
   bodyParser.json(),
   graphqlExpress((req) => {
     const { auth, portal, ip } = req;
-    const context = { auth, portal, ip };
+    const context = {
+      auth,
+      ip,
+      locked: READ_ONLY,
+      portal,
+    };
     return { schema, context };
   }),
 );

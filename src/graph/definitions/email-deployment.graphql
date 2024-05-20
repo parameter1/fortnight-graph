@@ -6,9 +6,9 @@ type Query {
 }
 
 type Mutation {
-  createEmailDeployment(input: CreateEmailDeploymentInput!): EmailDeployment!
-  deleteEmailDeployment(input: ModelIdInput!): String!
-  updateEmailDeployment(input: UpdateEmailDeploymentInput!): EmailDeployment!
+  createEmailDeployment(input: CreateEmailDeploymentInput!): EmailDeployment! @readOnly
+  deleteEmailDeployment(input: ModelIdInput!): String! @readOnly
+  updateEmailDeployment(input: UpdateEmailDeploymentInput!): EmailDeployment! @readOnly
 }
 
 enum EmailDeploymentSortField {

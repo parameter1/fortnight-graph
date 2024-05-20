@@ -12,19 +12,19 @@ type Query {
 }
 
 type Mutation {
-  cloneStory(input: ModelIdInput!): Story!
-  createStory(input: CreateStoryInput!): Story!
-  updateStory(input: UpdateStoryInput!): Story!
-  deleteStory(input: ModelIdInput!): String!
+  cloneStory(input: ModelIdInput!): Story! @readOnly
+  createStory(input: CreateStoryInput!): Story! @readOnly
+  updateStory(input: UpdateStoryInput!): Story! @readOnly
+  deleteStory(input: ModelIdInput!): String! @readOnly
   # An empty imageId will unset the primary image.
-  storyPrimaryImage(storyId: String!, imageId: String): Story!
-  removeStoryImage(storyId: String!, imageId: String!): Story!
-  addStoryImage(storyId: String!, imageId: String!): Story!
+  storyPrimaryImage(storyId: String!, imageId: String): Story! @readOnly
+  removeStoryImage(storyId: String!, imageId: String!): Story! @readOnly
+  addStoryImage(storyId: String!, imageId: String!): Story! @readOnly
 
-  storyTitle(id: String!, value: String!): Story!
-  storyTeaser(id: String!, value: String!): Story!
-  storyBody(id: String!, value: String!): Story!
-  storyPublishedAt(id: String!, value: Date): Story!
+  storyTitle(id: String!, value: String!): Story! @readOnly
+  storyTeaser(id: String!, value: String!): Story! @readOnly
+  storyBody(id: String!, value: String!): Story! @readOnly
+  storyPublishedAt(id: String!, value: Date): Story! @readOnly
 }
 
 enum StorySortField {

@@ -7,14 +7,14 @@ type Query {
 }
 
 type Mutation {
-  createUser(input: CreateUserInput!): User
-  updateUser(input: UpdateUserInput!): User
+  createUser(input: CreateUserInput!): User @readOnly
+  updateUser(input: UpdateUserInput!): User @readOnly
   loginUser(input: LoginInput!): Authentication
   deleteSession: String
   changeUserPassword(input: ChangeUserPasswordInput!): User
-  updateCurrentUserProfile(input: CurrentUserProfileInput!): User
-  deleteUser(input: ModelIdInput!): String!
-  undeleteUser(input: ModelIdInput!): User!
+  updateCurrentUserProfile(input: CurrentUserProfileInput!): User @readOnly
+  deleteUser(input: ModelIdInput!): String! @readOnly
+  undeleteUser(input: ModelIdInput!): User! @readOnly
 }
 
 type Session {
@@ -26,6 +26,7 @@ type Session {
 }
 
 type Authentication {
+  locked: Boolean!
   user: User!
   session: Session!
 }

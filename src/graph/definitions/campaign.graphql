@@ -11,32 +11,32 @@ type Query {
 }
 
 type Mutation {
-  createExternalUrlCampaign(input: CreateExternalUrlCampaignInput!): Campaign!
-  createNewStoryCampaign(input: CreateNewStoryCampaignInput!): Campaign!
-  createExistingStoryCampaign(input: CreateExistingStoryCampaignInput!): Campaign!
+  createExternalUrlCampaign(input: CreateExternalUrlCampaignInput!): Campaign! @readOnly
+  createNewStoryCampaign(input: CreateNewStoryCampaignInput!): Campaign! @readOnly
+  createExistingStoryCampaign(input: CreateExistingStoryCampaignInput!): Campaign! @readOnly
 
-  updateCampaign(input: UpdateCampaignInput!): Campaign!
-  cloneCampaign(input: ModelIdInput!): Campaign!
-  deleteCampaign(input: ModelIdInput!): String!
+  updateCampaign(input: UpdateCampaignInput!): Campaign! @readOnly
+  cloneCampaign(input: ModelIdInput!): Campaign! @readOnly
+  deleteCampaign(input: ModelIdInput!): String! @readOnly
 
-  assignCampaignValue(input: AssignCampaignValueInput!): Campaign!
+  assignCampaignValue(input: AssignCampaignValueInput!): Campaign! @readOnly
 
-  pauseCampaign(id: String!, paused: Boolean!): Campaign!
+  pauseCampaign(id: String!, paused: Boolean!): Campaign! @readOnly
 
-  campaignUrl(input: CampaignUrlInput!): Campaign!
-  campaignCriteria(input: CampaignCriteriaInput!): CampaignCriteria!
+  campaignUrl(input: CampaignUrlInput!): Campaign! @readOnly
+  campaignCriteria(input: CampaignCriteriaInput!): CampaignCriteria! @readOnly
 
-  addCampaignCreative(input: AddCampaignCreativeInput!): CampaignCreative!
-  removeCampaignCreative(input: RemoveCampaignCreativeInput!): String!
+  addCampaignCreative(input: AddCampaignCreativeInput!): CampaignCreative! @readOnly
+  removeCampaignCreative(input: RemoveCampaignCreativeInput!): String! @readOnly
 
-  campaignCreativeStatus(input: CampaignCreativeStatusInput!): CampaignCreative!
-  campaignCreativeDetails(input: CampaignCreativeDetailsInput!): CampaignCreative!
-  campaignCreativeImage(input: CampaignCreativeImageInput!): CampaignCreative!
+  campaignCreativeStatus(input: CampaignCreativeStatusInput!): CampaignCreative! @readOnly
+  campaignCreativeDetails(input: CampaignCreativeDetailsInput!): CampaignCreative! @readOnly
+  campaignCreativeImage(input: CampaignCreativeImageInput!): CampaignCreative! @readOnly
 
-  campaignContacts(input: SetContactsInput!): Campaign!
+  campaignContacts(input: SetContactsInput!): Campaign! @readOnly
 
-  campaignExternalContact(input: CampaignExternalContactInput!): Campaign!
-  removeCampaignExternalContact(input: RemoveCampaignExternalContactInput!): Campaign!
+  campaignExternalContact(input: CampaignExternalContactInput!): Campaign! @readOnly
+  removeCampaignExternalContact(input: RemoveCampaignExternalContactInput!): Campaign! @readOnly
 }
 
 enum CampaignStatus {

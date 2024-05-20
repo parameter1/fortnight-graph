@@ -20,6 +20,8 @@ scalar Cursor
 scalar Mixed
 scalar JSON
 
+directive @readOnly on FIELD_DEFINITION
+
 enum ContactTypes {
   internal
   external

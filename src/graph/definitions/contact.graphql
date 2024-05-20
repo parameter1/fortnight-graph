@@ -6,9 +6,9 @@ type Query {
 }
 
 type Mutation {
-  createContact(input: CreateContactInput!): Contact!
-  updateContact(input: UpdateContactInput!): Contact!
-  deleteContact(input: ModelIdInput!): String!
+  createContact(input: CreateContactInput!): Contact! @readOnly
+  updateContact(input: UpdateContactInput!): Contact! @readOnly
+  deleteContact(input: ModelIdInput!): String! @readOnly
 }
 
 enum ContactSortField {

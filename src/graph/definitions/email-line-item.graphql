@@ -3,12 +3,12 @@ type Query {
 }
 
 type Mutation {
-  createEmailLineItem(input: CreateEmailLineItemMutationInput!): EmailLineItem!
-  deleteEmailLineItem(input: ModelIdInput!): String!
+  createEmailLineItem(input: CreateEmailLineItemMutationInput!): EmailLineItem! @readOnly
+  deleteEmailLineItem(input: ModelIdInput!): String! @readOnly
 
-  emailLineItemDetails(input: EmailLineItemDetailsMutationInput!): EmailLineItem!
-  emailLineItemDateDays(input: EmailLineItemDateDaysMutationInput): EmailLineItem!
-  emailLineItemDateRange(input: EmailLineItemDateRangeMutationInput): EmailLineItem!
+  emailLineItemDetails(input: EmailLineItemDetailsMutationInput!): EmailLineItem! @readOnly
+  emailLineItemDateDays(input: EmailLineItemDateDaysMutationInput): EmailLineItem! @readOnly
+  emailLineItemDateRange(input: EmailLineItemDateRangeMutationInput): EmailLineItem! @readOnly
 }
 
 enum EmailLineItemSortField {
